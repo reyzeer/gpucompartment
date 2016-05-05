@@ -159,7 +159,7 @@ void mersensNumberTest()
 			}
 		}
 	}
-	printf( "Czas wykonywania: %lu ms\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f ms\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
@@ -181,7 +181,7 @@ void all32bitsNumber()
 		}*/
 
 	}
-	printf( "Czas wykonywania: %lu ms\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f ms\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
@@ -203,7 +203,7 @@ void all24bitsNumber()
 		}*/
 
 	}
-	printf( "Czas wykonywania: %lu s\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f s\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
@@ -225,7 +225,7 @@ void all16bitsNumber()
 		}*/
 
 	}
-	printf( "Czas wykonywania: %lu s\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f s\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
@@ -239,20 +239,11 @@ void rangeTest(_uint64 startRange, _uint64 endRange)
 	cout << "Start.\n";
 	clock_t start = clock();
 	for (_uint64 i = startRange; i <= endRange; i++) {
-		
-		//primeNumberTestingStart(i);
-
-		cout << i << " ";
 		if (primeNumberTestingStart(i)) {
-			cout << "jest pierwsza.\n";
+			cout << i << " jest pierwsza.\n";
 		}
-		else {
-			cout << "nie jest pierwsza.\n";
-		}
-
-
 	}
-	printf( "Czas wykonywania: %lu s\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f s\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
