@@ -1,0 +1,8 @@
+﻿  main.cpp
+main.cpp(52): warning C4244: 'initializing': conversion from 'double' to '_uint64', possible loss of data
+  Generating code
+  10 of 120 functions ( 8.3%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  cpu_multi_threads_windows.vcxproj -> C:\Users\Zbigniew Czarnecki\gpucompartment\cpu\multi_thread\windows\cpu_multi_threads_windows\x64\Release\cpu_multi_threads_windows.exe
