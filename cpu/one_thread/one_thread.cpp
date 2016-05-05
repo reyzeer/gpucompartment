@@ -44,19 +44,13 @@ void rangeTest(_uint64 startRange, _uint64 endRange)
 	clock_t start = clock();
 	for (_uint64 i = startRange; i <= endRange; i++) {
 		
-		//primeNumberTesting(i);
-
-		cout << i << " ";
 		if (primeNumberTesting(i)) {
-			cout << "jest pierwsza.\n";
-		}
-		else {
-			cout << "nie jest pierwsza.\n";
+			cout << i << " jest pierwsza.\n";
 		}
 
 
 	}
-	printf( "Czas wykonywania: %lu s\n", (clock() - start)/CLOCKS_PER_SEC );
+	printf( "Czas wykonywania: %f s\n", ((double) clock() - start)/CLOCKS_PER_SEC );
 
 }
 
