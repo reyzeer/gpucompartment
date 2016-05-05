@@ -35,8 +35,10 @@ __global__ void primeNumberTesting(_uint64 iNumber, _uint64 iMaxTestNumber) {
 		if (iNumber % n == 0) {
 			isPrime = false;
 			
-			//asm("trap;"); //anuluje wszystkie watki			
-
+			//*status = 0;
+			//__threadfence_system();
+			//asm("trap;"); //anuluje wszystkie watki	
+			
 			return;
 
 			//przerywania dzialanie
