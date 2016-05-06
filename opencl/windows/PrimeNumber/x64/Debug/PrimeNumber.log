@@ -1,9 +1,0 @@
-﻿  main.cpp
-e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(21): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'int', possible loss of data
-e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(21): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'const int', possible loss of data
-e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(171): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type '__int64'
-  e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(171): note: consider using '%lld' in the format string
-  e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(171): note: consider using '%Id' in the format string
-  e:\documents\visual studio 2015\projects\primenumber\primenumber\main.cpp(171): note: consider using '%I64d' in the format string
-  PrimeNumber.vcxproj -> e:\documents\visual studio 2015\Projects\PrimeNumber\x64\Debug\PrimeNumber.exe
-  PrimeNumber.vcxproj -> e:\documents\visual studio 2015\Projects\PrimeNumber\x64\Debug\PrimeNumber.pdb (Partial PDB)
