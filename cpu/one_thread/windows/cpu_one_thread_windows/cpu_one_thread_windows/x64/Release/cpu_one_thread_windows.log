@@ -1,0 +1,6 @@
+﻿  main.cpp
+main.cpp(14): warning C4244: 'initializing': conversion from 'double' to '_uint64', possible loss of data
+  Generating code
+  All 17 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  cpu_one_thread_windows.vcxproj -> C:\Users\Zbigniew Czarnecki\gpucompartment\cpu\one_thread\windows\cpu_one_thread_windows\x64\Release\cpu_one_thread_windows.exe

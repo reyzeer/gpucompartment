@@ -1,0 +1,3 @@
+﻿  main.cpp
+c:\users\zbigniew czarnecki\gpucompartment\cpu\multi_thread\windows\cpu_multi_threads_windows\cpu_multi_threads_windows\main.cpp(52): warning C4244: 'initializing': conversion from 'double' to '_uint64', possible loss of data
+  cpu_multi_threads_windows.vcxproj -> C:\Users\Zbigniew Czarnecki\gpucompartment\cpu\multi_thread\windows\cpu_multi_threads_windows\x64\Debug\cpu_multi_threads_windows.exe
