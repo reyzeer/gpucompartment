@@ -25,7 +25,10 @@ __device__ bool isPrime;
 __global__ void primeNumberTesting(_uint64 iNumber, _uint64 iMaxTestNumber) {
 
 	if (!isPrime) {
-		return;
+		printf("trap\n");
+		__threadfence();
+		//return;		
+		asm("trap;");
 	}
 
 	_uint64 threads	= blockDim.x;	//liczba watkow
@@ -51,8 +54,6 @@ __global__ void primeNumberTesting(_uint64 iNumber, _uint64 iMaxTestNumber) {
 			//asm("exit;"); //anuluje ten watek
 		}
 	}
-
-	__syncthreads();
 
 }
 
@@ -93,16 +94,21 @@ bool primeNumberTestingStart(_uint64 number) {
 	cudaMemcpyToSymbol(isPrime,&isPrime_Host,sizeof(bool),0,cudaMemcpyHostToDevice);
 
 	_uint64 blocksPerGrid = iMaxTestNumber/THREADS/2+1;
-
+	
+	cout << number << endl;
 	primeNumberTesting<<<blocksPerGrid, THREADS>>>(number, iMaxTestNumber);
 	err = cudaGetLastError();
 
 	if (err != cudaSuccess) {
-		fprintf(stderr,
-				"Failed to launch primeNumberTesting kernel (error code %s)!\n",
+		fprintf(stderr, "Failed to launch primeNumberTesting kernel (error code %s)!\n",
 				cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
+		//exit(EXIT_FAILURE);
 	}
+
+	isPrime_Host = false;
+
+	//cout << "?: " << isPrime_Host << endl;
+	//cout << "??: " << isPrime << endl;
 
 	cudaMemcpyFromSymbol(&isPrime_Host,isPrime,sizeof(bool),0,cudaMemcpyDeviceToHost);
 
@@ -263,9 +269,9 @@ int main()
 
 	_uint64 endRange = 18446744073709551614;
 	_uint64 startRange = endRange - 256;
-	for (int i = 0; i < 10; i++) {
+	//for (int i = 0; i < 10; i++) {
 		rangeTest(startRange, endRange);
-	}
+	//}
 
 	return 0;
 
