@@ -24,6 +24,8 @@ __device__ bool isPrime;
 
 __global__ void primeNumberTesting(_uint64 number, _uint64 maxTestNumber) {
 
+//__host__ __device__ void primeNumberTesting(_uint64 number, _uint64 maxTestNumber) {
+
 	_uint64 threads	= blockDim.x;	//liczba watkow
 	_uint64 thread	= threadIdx.x;	//numer aktualnego watku
 	//_uint64 round	= blockIdx.x;	//numer przebiegu petli

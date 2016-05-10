@@ -14,25 +14,43 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
+#define CUDA_CALL(expr) {                       \
+    int status = (expr);                        \
+    if (status != cudaSuccess) {                    \
+      printf("Error at %s:%d -- %d\n", __FILE__, __LINE__, status); \
+      exit(EXIT_FAILURE);                       \
+    }                                   \
+  }
+
 using namespace std;
 
 typedef unsigned long long int _uint64;
 
 #define THREADS 1024
 
+void device_reset()
+{
+  CUDA_CALL(cudaDeviceReset());
+}
+
 /* ------------------------------------------------------------
  	 	 	 CUDA func
  ------------------------------------------------------------ */
 
 __device__ bool isPrime;
+__device__ bool isTrap;
 
 __global__ void primeNumberTesting(_uint64 iNumber, _uint64 iMaxTestNumber) {
 
 	if (!isPrime) {
-		printf("trap\n");
-		__threadfence();
+		if (!isTrap) {
+			isTrap = true;
+			asm("trap;");
+		}
+		//printf("trap\n");
+		//__threadfence();
 		//return;		
-		asm("trap;");
+		//asm("trap;");
 	}
 
 	_uint64 threads	= blockDim.x;	//liczba watkow
@@ -83,7 +101,7 @@ __global__ void fermatPrimeNumberTest(_uint64 number, _uint64 k) {
 
 		  /* curand works like rand - except that it takes a state as a parameter */
 
-		_uint64  i, random, x;
+		_uint64 random, x;
 		random = ( curand(&state) % (number-1) ) + 1;
 		x = ((_uint64) powf( (float) random, number - 1));
 		if (x % random != 1) {
@@ -119,16 +137,30 @@ __global__ void fermatPrimeNumberTest(_uint64 number, _uint64 k) {
  	 	 	 	 	 	 CPU func
  ------------------------------------------------------------ */
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 bool primeNumberTestingStart(_uint64 number) {
 
 	_uint64 iMaxTestNumber = sqrt((double) number); //maksymalna sprawdza wartosc
 
+	cudaDeviceReset();
+
 	// Error code to check return values for CUDA calls
 	cudaError_t err = cudaSuccess;
 
+	//cudaError_t err = cudaDeviceReset();
+
 	bool isPrime_Host = true;
 
-	cudaMemcpyToSymbol(isPrime,&isPrime_Host,sizeof(bool),0,cudaMemcpyHostToDevice);
+	CUDA_CALL(cudaMemcpyToSymbol(isPrime,&isPrime_Host,sizeof(bool),0,cudaMemcpyHostToDevice));
 
 	_uint64 blocksPerGrid = iMaxTestNumber/THREADS/2+1;
 	
@@ -137,10 +169,24 @@ bool primeNumberTestingStart(_uint64 number) {
 	err = cudaGetLastError();
 
 	if (err != cudaSuccess) {
-		fprintf(stderr, "Failed to launch primeNumberTesting kernel (error code %s)!\n",
-				cudaGetErrorString(err));
+		//fprintf(stderr, "Failed to launch primeNumberTesting kernel (error code %s)!\n",
+		//		cudaGetErrorString(err));
 		//exit(EXIT_FAILURE);
+
+		//cudaDeviceReset();
+
+		//cudaDeviceReset();
+		//CUDA_CALL(cudaDeviceReset());
+
+		//cudaDeviceSynchronize();
+		//gpuErrchk( cudaPeekAtLastError() );
+		//gpuErrchk( cudaDeviceSynchronize() );
+
+		//cudaSafeCall();
+
+		return false;
 	}
+	return true;
 
 	isPrime_Host = false;
 
@@ -159,8 +205,10 @@ _uint64 fermatPrimeNumberTestStart(_uint64 number, _uint64 k) {
 	cudaError_t err = cudaSuccess;
 
 	bool isPrime_Host = true;
+	bool isTrap_Host = true;
 
 	cudaMemcpyToSymbol(isPrime,&isPrime_Host,sizeof(bool),0,cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(isTrap,&isTrap_Host,sizeof(bool),0,cudaMemcpyHostToDevice);
 
 	_uint64 blocksPerGrid = k/THREADS+1;
 
@@ -330,12 +378,12 @@ void rangeTest(_uint64 startRange, _uint64 endRange)
 int main()
 {
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
-	cout << fermatPrimeNumberTestStart(47, 10) << endl;
-	cout << fermatPrimeNumberTestStart(821, 10) << endl;
+	//cout << fermatPrimeNumberTestStart(47, 10) << endl;
+	//cout << fermatPrimeNumberTestStart(821, 10) << endl;
 
-	return 0;
+	//return 0;
 
 	//mersensNumberTest()
 	//all16bitsNumber();
@@ -343,7 +391,7 @@ int main()
 	//all32bitsNumber();
 
 	_uint64 endRange = 18446744073709551614;
-	_uint64 startRange = endRange - 256;
+	_uint64 startRange = endRange - 10;
 	//for (int i = 0; i < 10; i++) {
 		rangeTest(startRange, endRange);
 	//}
