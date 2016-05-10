@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <CL/cl.h>
 
+#include <time.h>
+
 #define KERNEL_SIZE (0x400)
+#define PLATFORM 0
+// Platform 0 - GPU, Platform 1 - CPU
 typedef unsigned long long int _uint64;
 
 void pause() {
@@ -10,9 +14,10 @@ void pause() {
 	scanf_s("%d", &x);
 }
 
-void run(cl_ulong checkNumber) {
+bool primeNumberTestingStart(cl_ulong checkNumber) {
 
 	cl_ulong *Number = NULL;
+	cl_int *WorkGroups = NULL;
 	cl_ulong *Output = NULL;
 	int *Status = NULL;
 
@@ -23,13 +28,15 @@ void run(cl_ulong checkNumber) {
 
 	//Alokowanie pamiêci zmiennych
 	Number = (cl_ulong*)malloc(sizeof(cl_ulong));
+	WorkGroups = (cl_int*)malloc(sizeof(int));
 	Output = (cl_ulong*)malloc(dataSize);
 	Status = (int*)malloc(sizeof(int));
 
 	//Inicjalizacja zmiennych
 	*Number = checkNumber;
+	*WorkGroups = elements;
 	Status[0] = 0;
-	printf("%llu %llu\n", Number[0], checkNumber);
+	//printf("%llu %llu\n", Number[0], checkNumber);
 
 	//Do sprawdzania wartoœci odwo³añ do API
 	cl_int status;
@@ -53,9 +60,9 @@ void run(cl_ulong checkNumber) {
 	cl_device_id *devices = NULL;
 
 	//platforms[0] gdyz interesuje nas tylko karta graficzna
-	status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 0, NULL, &devicesNumber);
+	status = clGetDeviceIDs(platforms[PLATFORM], CL_DEVICE_TYPE_ALL, 0, NULL, &devicesNumber);
 	devices = (cl_device_id*)malloc(devicesNumber*sizeof(cl_device_id));
-	status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, devicesNumber, devices, NULL);
+	status = clGetDeviceIDs(platforms[PLATFORM], CL_DEVICE_TYPE_ALL, devicesNumber, devices, NULL);
 
 	//---
 	// Kontekst
@@ -76,10 +83,12 @@ void run(cl_ulong checkNumber) {
 	//---
 
 	cl_mem bufferNumber;
+	cl_mem bufferWorkGroups;
 	cl_mem bufferOutput;
 	cl_mem bufferStatus;
 
 	bufferNumber = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_ulong), NULL, &status);
+	bufferWorkGroups = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_int), NULL, &status);
 	bufferOutput = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dataSize, NULL, &status);
 	bufferStatus = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int), NULL, &status);
 
@@ -88,6 +97,7 @@ void run(cl_ulong checkNumber) {
 	//---
 
 	status = clEnqueueWriteBuffer(cmdQueue, bufferNumber, CL_FALSE, 0, sizeof(cl_ulong), Number, 0, NULL, NULL);
+	status += clEnqueueWriteBuffer(cmdQueue, bufferWorkGroups, CL_FALSE, 0, sizeof(cl_int), WorkGroups, 0, NULL, NULL);
 
 	//---
 	// Stworzenie programu
@@ -106,7 +116,7 @@ void run(cl_ulong checkNumber) {
 		source_str = (char*)malloc(KERNEL_SIZE);
 		source_size = fread(source_str, 1, KERNEL_SIZE, fp);
 		fclose(fp);
-		fprintf(stderr, "Kernel loaded\n");
+		//fprintf(stderr, "Kernel loaded\n");
 		//Wyœwietlanie kodu kernela
 		//printf("%d: %s", source_size, source_str); 
 	}
@@ -126,8 +136,9 @@ void run(cl_ulong checkNumber) {
 	//---
 
 	status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferNumber);
-	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferOutput);
-	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferStatus);
+	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferWorkGroups);
+	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferOutput);
+	status |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &bufferStatus);
 
 	//---
 	// Konfiguracja struktury pracy
@@ -169,10 +180,17 @@ void run(cl_ulong checkNumber) {
 	// Sprawdzenie pierwszoœci liczby
 	//---
 
+	int x = 0;
 	for (long long int i = 0; i < elements; i++) {
-		printf("%llu\n", Output[i]);
+		printf("%llu	", Output[i]);
+		if (Output[i] > 0) {
+			return 0;
+		}
+
+		//x += Output[i];
 	}
-	printf("Status=%d", Status[0]);
+	return 1;
+	//printf("Status=%d", x);
 
 	//bool result = true;
 	//for (long long int i = 2; i < elements; i++) {
@@ -197,14 +215,40 @@ void run(cl_ulong checkNumber) {
 
 }
 
+void rangeTest(_uint64 startRange, _uint64 endRange)
+{
+
+	if (endRange >= 18446744073709551615) {
+		endRange = 18446744073709551614;
+	}
+
+	printf( "Start.\n");
+	clock_t start = clock();
+	for (_uint64 i = startRange; i <= endRange; i++) {
+		if (primeNumberTestingStart(i)) {
+			printf("%llu jest pierwsza.\n", i);
+		}
+	}
+	printf("Czas wykonywania: %f s\n", ((double)clock() - start) / CLOCKS_PER_SEC);
+
+}
+
 int main() {
 
-	_uint64 checkNumber = 0;
-	//printf("Check number:\n >");
-	//scanf_s("%llu", &checkNumber);
-	//for (int i = 100000; i < 131072; i++)
-	_uint64 i = 1234567890;
-		run(i);
+	_uint64 i = 2147483647;				//	2^31 -1
+	//_uint64 i = 2305843009213693951;	//	2^62 -1
+	//_uint64 i = 15481303;
+	//_uint64 i = 131071;
+	if(primeNumberTestingStart(i))
+		printf("%llu jest pierwsza.\n", i);
+	else
+		printf("%llu nie jest pierwsza.\n", i);
+
+	//_uint64 endRange = 18446744073709551614;
+	//_uint64 startRange = endRange - 256;
+	//for (int i = 0; i < 10; i++) {
+	//	rangeTest(startRange, endRange);
+	//}
 
 	
 
