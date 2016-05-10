@@ -10,6 +10,10 @@
 #include <math.h>
 #include <ctime>
 
+/* we need these includes for CUDA's random number stuff */
+#include <curand.h>
+#include <curand_kernel.h>
+
 using namespace std;
 
 typedef unsigned long long int _uint64;
@@ -52,6 +56,39 @@ __global__ void primeNumberTesting(_uint64 iNumber, _uint64 iMaxTestNumber) {
 			//__threadfence();
 			//asm("trap;"); //anuluje wszystkie watki
 			//asm("exit;"); //anuluje ten watek
+		}
+	}
+
+}
+
+__global__ void fermatPrimeNumberTest(_uint64 number, _uint64 k) {
+
+	if (!isPrime) {
+		return;		
+	}
+
+	//_uint64 threads	= blockDim.x;	//liczba watkow
+	_uint64 thread	= threadIdx.x;	//numer aktualnego watku
+	_uint64 round	= blockIdx.x;	//numer przebiegu petli
+
+	if (thread * round < k) {
+
+		  curandState_t state;
+
+		  /* we have to initialize the state */
+		  curand_init(0, /* the seed controls the sequence of random values that are produced */
+			      0, /* the sequence number is only important with multiple cores */
+			      0, /* the offset is how much extra we advance in the sequence for each call, can be 0 */
+			      &state);
+
+		  /* curand works like rand - except that it takes a state as a parameter */
+
+		_uint64  i, random, x;
+		random = ( curand(&state) % (number-1) ) + 1;
+		x = ((_uint64) powf( (float) random, number - 1));
+		if (x % random != 1) {
+			isPrime = false;
+			return;
 		}
 	}
 
@@ -113,6 +150,37 @@ bool primeNumberTestingStart(_uint64 number) {
 	cudaMemcpyFromSymbol(&isPrime_Host,isPrime,sizeof(bool),0,cudaMemcpyDeviceToHost);
 
 	return isPrime_Host;
+
+}
+
+_uint64 fermatPrimeNumberTestStart(_uint64 number, _uint64 k) {
+
+	// Error code to check return values for CUDA calls
+	cudaError_t err = cudaSuccess;
+
+	bool isPrime_Host = true;
+
+	cudaMemcpyToSymbol(isPrime,&isPrime_Host,sizeof(bool),0,cudaMemcpyHostToDevice);
+
+	_uint64 blocksPerGrid = k/THREADS+1;
+
+	primeNumberTesting<<<blocksPerGrid, THREADS>>>(number, k);
+	err = cudaGetLastError();
+
+	if (err != cudaSuccess) {
+		fprintf(stderr, "Failed to launch primeNumberTesting kernel (error code %s)!\n",
+				cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	cudaMemcpyFromSymbol(&isPrime_Host,isPrime,sizeof(bool),0,cudaMemcpyDeviceToHost);
+
+	if (isPrime_Host) {
+		return k;
+	}
+	else {
+		return 0;
+	}
 
 }
 
@@ -261,6 +329,13 @@ void rangeTest(_uint64 startRange, _uint64 endRange)
 
 int main()
 {
+
+	srand(time(NULL));
+
+	cout << fermatPrimeNumberTestStart(47, 10) << endl;
+	cout << fermatPrimeNumberTestStart(821, 10) << endl;
+
+	return 0;
 
 	//mersensNumberTest()
 	//all16bitsNumber();
